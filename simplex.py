@@ -1,15 +1,16 @@
 import argparse
 import numpy as np
 import sys
+total_var = 0
 des_num = 0
 res_num = 0
 u_coef = []														#u_coef son los valores de la funcion U
 res_coef = []													#res_coef son los valores de las restricciones
 signed = []														#signed es el tipo de cada restriccion
-max = True
+min_flag = False
 
 def getInput(input_file):										#Lee archivo de entrada, lo parsea y almacena
-	global des_num, res_num, u_coef, res_coef, signed
+	global des_num, res_num, u_coef, res_coef, signed, total_var
 	line_num = 0
 	with open(input_file) as f:
 		for line in f:
@@ -17,6 +18,7 @@ def getInput(input_file):										#Lee archivo de entrada, lo parsea y almacena
 			if(line_num==0):
 				des_num = int(list[0])
 				res_num = int(list[1])
+				total_var += des_num + res_num
 				line_num+=1
 			else :
 				if(line_num==1):
@@ -29,8 +31,10 @@ def getInput(input_file):										#Lee archivo de entrada, lo parsea y almacena
 						aux.append(int(list[i]))
 					res_coef.append(aux)
 					listAux = list[-1].split('\n')
+					if(listAux[0] == '≥'):
+						total_var+=1
 					signed.append(listAux[0])
-				
+
 def printAux():													#Imprime valores despues de leerlos y procesarlos		
 	global des_num, res_num, u_coef, res_coef
 	print(u_coef)
@@ -112,7 +116,44 @@ def printMat(mat):
 	for i in range(len(mat)):
 		print(mat[i])
 
+def fillMat(mat):
+	global total_var
+
+	len_u_coef = len(u_coef)
+	len_res_coef = len(res_coef)
+	un_assign_var = des_num
+
+	for i in range(0, len_u_coef): 			#Llenar los coeficientes de U en la tabla
+		mat[0][i] = u_coef[i] * -1
+	
+	for i in range(0, len_res_coef): 		#Llenar los coeficientes de las restricciones junto con 
+		for j in range(0, len_u_coef + 1): 	#las variables de holgura, M y de exceso
+
+			if(j == len_u_coef):
+				mat[i+1][total_var] = res_coef[i][j]
+			else:
+				mat[i+1][j] = res_coef[i][j]
+
+		if(signed[i] == '≥'): 				#Agrega la variable de exceso
+			mat[i+1][un_assign_var] = -1
+			un_assign_var += 1
+			mat[0][un_assign_var] = -1j
+
+		if(signed[i] == '='):
+			mat[0][un_assign_var] = -1j			
+		
+		mat[i+1][un_assign_var] = 1
+		un_assign_var += 1
+
+	if(min_flag):
+		for i in range(0, total_var + 1):
+			mat[0][i] *= -1
+
+	#modificar U si existen Ms
+
+
 def main():
+	'''
 	global des_num, res_num, u_coef, res_coef, max
 	parser = argparse.ArgumentParser(description="Programa para calcular metodo Simplex")
 	parser.add_argument("input", help="Archivo de entrada para el programa")
@@ -126,6 +167,26 @@ def main():
 	mat = makeFirstMat()
 	print(np.array(mat))
 	solve(np.array(mat,dtype=float))
+	'''
+	global des_num, res_num, u_coef, res_coef, total_var, min_flag, mat
+	parser = argparse.ArgumentParser(description="Programa para calcular metodo Simplex")
+	
+	parser.add_argument("input", help="Archivo de entrada para el programa")
+	parser.add_argument("-min", help="Bandera para minimizar", action="store_true")
+	parser.add_argument("-max", help="Bandera para maximizar", action="store_true")
+	parser.add_argument("-o","--output", help="Archivo de salida para el programa")
 
+	args = parser.parse_args()
+	min_flag = args.min
+	getInput(args.input)
+	printAux()
+
+	mat = np.zeros([res_num + 1, total_var + 1], dtype=np.complex)
+
+	fillMat(mat)
+
+	print()
+	print(mat)
+	#print(args.accumulate(args.integers))
 
 main()
