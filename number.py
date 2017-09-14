@@ -56,21 +56,19 @@ class Number:
 
 		return Number(newN, newM)
 
-	def __mul__(self, other):
-		print("entro")
+	def __imul__(self, other):
 		self.n *= other.n
 		self.M *= other.M
 
 		return self
 
 	def __truediv__(self, other):
-		print("entro")
 		newN = self.n / other.n
 		newM = self.M / other.M
 
 		return Number(newN, newM)
 
-	def __truediv__(self, other):
+	def __itruediv__(self, other):
 		self.n /= other.n
 		self.M /= other.M
 
