@@ -1,10 +1,13 @@
 from number import Number as n
 import argparse
 import sys
+import pypandoc
 
 vb = [] #Variables basicas
 rest = 0 #numero de restricciones
 decision = 0 #variables de decision
+f = open('.result.md', 'w')
+
 def getInput(input_file, min_flag):#procesa entradas
 	global vb, rest, decision
 	line_num = 0
@@ -118,10 +121,27 @@ def getNewMat(table, column, row): #aplica las operaciones para hacer la nueva m
 	return table
 
 def printState(new, out, pivot, table, case):# imprime casos intermedios
-	print("Estado "+str(case)+":\n")
-	for row in table:
-		print(' '.join(map(str,row)))
-	print("\nVB Entrante: "+str(new)+" VB Saliente: "+str(out)+" Numero Pivot: "+str(pivot))
+	global f
+	f.write("## Estado "+str(case)+":\n")
+	
+	length = len(table[0])
+
+	f.write("|")
+	for x in range(1,length):
+		f.write("X" + str(x) + "|")
+
+	f.write("LD|\n")
+	f.write("|")
+	for x in range(1,length+1):
+		f.write("--|")
+
+	f.write("\n")
+
+	for row in table:	
+		f.write('|'.join(map(str,row)))
+		f.write("\n")
+	f.write("\n###### VB Entrante: "+str(new)+", VB Saliente: "+str(out)+", Numero Pivot: "+str(pivot))
+	f.write("\n\n")
 
 
 def solve(table): #Metodo Simplex
@@ -137,42 +157,60 @@ def solve(table): #Metodo Simplex
 		
 		vb[pivot[1]-1] = min[1]
 
-		table = getNewMat(table,pivot[1],min[1])
-		print("\n")
-		print("\n")
+		table = getNewMat(table,pivot[1],min[1])		
 		case += 1
 
 	return table
 
 def finalState(table, vb): #imprime estado final
-	print("Estado Final:\n")
-	for row in table:
-		print(' '.join(map(str,row)))
+	f.write("### Estado Final:\n")
+
+	length = len(table[0])
+
+	f.write("|")
+	for x in range(1,length):
+		f.write("X" + str(x) + "|")
+
+	f.write("LD|\n")
+	f.write("|")
+	for x in range(1,length+1):
+		f.write("--|")
+
+	f.write("\n")
+
+	for row in table:	
+		f.write('|'.join(map(str,row)))
+		f.write("\n")
 	
-	res = "\nResultado Final: U = "+str(abs(table[0][-1].n))+ ", ("
+	res = "Resultado Final: U = "+str(abs(table[0][-1].n))+ ", ("
 
 	for x in range(len(table[0])-1):
 		if(x in vb):
 			for y in range(len(table)):
 				if(table[y][x].n == 1):
-					res+=str(table[y][-1])+" "
+					res+=str(table[y][-1])+", "
 		else:
-			res+= "0 "
+			res+= "0, "
 
 	res+=")"
-	print(res)
+	f.write("\n#### " + res)
+	f.write("\n")
 
 def main():
-	global vb, decision
+	global vb, decision, f
 	parser = argparse.ArgumentParser(description="Programa para calcular metodo Simplex")
 	
 	parser.add_argument("input", help="Archivo de entrada para el programa")
 	parser.add_argument("-min", help="Bandera para minimizar", action="store_true")
 	parser.add_argument("-max", help="Bandera para maximizar", action="store_true")
-	parser.add_argument("-o","--output", help="Archivo de salida para el programa")
+	parser.add_argument("-o","--output", help="Archivo de salida para el programa", default="result.pdf")
 	min_flag = False
 	args = parser.parse_args()
 	min_flag = args.min
+	outputfile = args.output
+
+	if(not outputfile.endswith('.pdf')):
+		outputfile += '.pdf'
 
 	table = getInput(args.input, min_flag)#Procesa entrada
 
@@ -182,6 +220,9 @@ def main():
 	
 	finalState(table,vb)#imprime el estado final
 	
+	f.close()
+
+	pypandoc.convert_file('.result.md', 'pdf', outputfile=outputfile)
 
 	
 main()
