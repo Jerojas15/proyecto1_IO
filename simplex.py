@@ -1,6 +1,6 @@
-import argparse
+
 import numpy as np
-import sys
+
 total_var = 0
 des_num = 0
 res_num = 0
@@ -169,16 +169,8 @@ def main():
 	solve(np.array(mat,dtype=float))
 	'''
 	global des_num, res_num, u_coef, res_coef, total_var, min_flag, mat
-	parser = argparse.ArgumentParser(description="Programa para calcular metodo Simplex")
 	
-	parser.add_argument("input", help="Archivo de entrada para el programa")
-	parser.add_argument("-min", help="Bandera para minimizar", action="store_true")
-	parser.add_argument("-max", help="Bandera para maximizar", action="store_true")
-	parser.add_argument("-o","--output", help="Archivo de salida para el programa")
-
-	args = parser.parse_args()
-	min_flag = args.min
-	getInput(args.input)
+	
 	printAux()
 
 	mat = np.zeros([res_num + 1, total_var + 1], dtype=np.complex)

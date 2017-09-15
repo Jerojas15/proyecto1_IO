@@ -64,7 +64,10 @@ class Number:
 
 	def __truediv__(self, other):
 		newN = self.n / other.n
-		newM = self.M / other.M
+		if(self.M != 0 and other.M != 0):
+			newM = self.M / other.M
+		else:
+			newM = 0
 
 		return Number(newN, newM)
 
